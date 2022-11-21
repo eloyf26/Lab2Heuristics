@@ -17,6 +17,4 @@ def ReadInputFile():
     
     #Input file follow this format: (1/2/.../n),(1/2),(C/X),(R/X),(Sibling ID, 0 if non)
     # For example: 1,1,C,X,3 . Student ID:1 , Year:1 , Troublesome: C(Troublesome), Mobility: X(Not Reduced), SiblingId: 3  
-    
-    pathToJson
     f = open()

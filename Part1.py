@@ -37,12 +37,13 @@ def main():
     redMobSection2 = intersection(reducedMobility,section2)
 
 
-
+    #We divide the domain in different sets so that we can work easier with different type of students
     studentIds = []
     redMobStudentIds = []
     firstYearStudentIds = []
     secondYearStudentIds = []
     troubleStudentIds = []
+    siblingPairs = GetSiblingPairs(students)
 
     for student in students:
         studentIds.append(student[0])
@@ -75,10 +76,20 @@ def main():
     problem.addConstraint(lambda a: a in section2 == True, [id for student[0] in secondYearStudentIds])
     #Not adjacent to troublesome
     problem.addConstraint(NotAdjacentSeatCondition(), ([id1 for id1 in troubleStudentIds],[id2 for id2 in studentIds]))
+    #Silbling in same section
 
     
-
-
+def GetSiblingPairs(students):
+    siblings = []
+    for student in students:
+        #IF student has siblings
+        if (student[4]!= '0'): 
+            #If not already on list
+            #Check if the sibling was already added (and thus, himself too)
+            if ([student[4],student[0]] not in siblings):   
+                siblings.append([student[0],student[4]])    
+    
+    return siblings
 
 def NotNextToSeatCondition(a,b):
     #Odd and even numbers have different adjacent seats (not symmetric)

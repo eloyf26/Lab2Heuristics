@@ -5,7 +5,7 @@ import numpy as np
 
 def ReadInputFile():
 
-    studentsTxt = open('Students2.txt','r')
+    studentsTxt = open('Students.txt','r')
     students = []
     for line in studentsTxt.read().splitlines():
         s = line.split(",")
@@ -63,15 +63,26 @@ def main():
 
     #Defining Constraints:
 
+    #Note that we are checking if the arrays of Ids are empty before adding the constraint because that will cause an error
     #1 per seat
-    problem.addConstraint(AllDifferentConstraint(),[id for id in studentIds])
+    if not studentIds:
+        print("StudentIds is empty")
+    else:
+        problem.addConstraint(AllDifferentConstraint(),[id for id in studentIds])
     #Reduced Mobility seats
-    problem.addConstraint(CheckIfOnGroup, ([id for id in redMobFirstYearIds],redMobSection1))
-    problem.addConstraint(CheckIfOnGroup, ([id for id in redMobSecondYearIds],redMobSection2))
-    #problem.addConstraint(lambda a: a in redMobSection2 == True, [id for id in redMobSecondYearIds])
+    if not redMobFirstYearIds:
+        print("redMobFirstYearIds is empty")
+    else:
+        problem.addConstraint(CheckIfOnGroup, ([id for id in redMobFirstYearIds],redMobSection1))
+    if not redMobSecondYearIds:
+        print("redMobSecondYearIds is empty")
+    else:
+        problem.addConstraint(CheckIfOnGroup, ([id for id in redMobSecondYearIds],redMobSection2))
     solutions = problem.getSolutions()
+    
     #Not next to reduced mobility
     problem.addConstraint(NotNextToSeatCondition, ([id1 for id1 in redMobStudentIds],[id2 for id2 in studentIds]))
+    solutions = problem.getSolutions()
     #First year seats
     problem.addConstraint(lambda a: a in section1 == True, [id for student[0] in firstYearStudentIds])
     #Second year seats

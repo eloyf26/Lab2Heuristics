@@ -5,7 +5,7 @@ import numpy as np
 
 def ReadInputFile():
 
-    studentsTxt = open('Students.txt','r')
+    studentsTxt = open('Students2.txt','r')
     students = []
     for line in studentsTxt.read().splitlines():
         s = line.split(",")
@@ -66,19 +66,28 @@ def main():
     #1 per seat
     problem.addConstraint(AllDifferentConstraint(),[id for id in studentIds])
     #Reduced Mobility seats
-    problem.addConstraint(lambda a: a in redMobSection1 == True, [id for id in redMobFirstYearIds])
-    problem.addConstraint(lambda a: a in redMobSection2 == True, [id for id in redMobSecondYearIds])
+    problem.addConstraint(CheckIfOnGroup, ([id for id in redMobFirstYearIds],redMobSection1))
+    problem.addConstraint(CheckIfOnGroup, ([id for id in redMobSecondYearIds],redMobSection2))
+    #problem.addConstraint(lambda a: a in redMobSection2 == True, [id for id in redMobSecondYearIds])
+    solutions = problem.getSolutions()
     #Not next to reduced mobility
-    problem.addConstraint(NotNextToSeatCondition(), ([id1 for id1 in redMobStudentIds],[id2 for id2 in studentIds]))
+    problem.addConstraint(NotNextToSeatCondition, ([id1 for id1 in redMobStudentIds],[id2 for id2 in studentIds]))
+    solutions = problem.getSolutions()
     #First year seats
     problem.addConstraint(lambda a: a in section1 == True, [id for student[0] in firstYearStudentIds])
+    solutions = problem.getSolutions()
     #Second year seats
     problem.addConstraint(lambda a: a in section2 == True, [id for student[0] in secondYearStudentIds])
+    solutions = problem.getSolutions()
     #Not adjacent to troublesome
-    problem.addConstraint(NotAdjacentSeatCondition(), ([id1 for id1 in troubleStudentIds],[id2 for id2 in studentIds]))
+    problem.addConstraint(NotAdjacentSeatCondition, ([id1 for id1 in troubleStudentIds],[id2 for id2 in studentIds]))
     #Silbling in same section
+    solutions = problem.getSolutions()
 
-    
+
+def CheckIfOnGroup(a,group):
+    return (a in group)
+
 def GetSiblingPairs(students):
     siblings = []
     for student in students:

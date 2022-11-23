@@ -73,11 +73,13 @@ def main():
     if not redMobFirstYearIds:
         print("redMobFirstYearIds is empty")
     else:
-        problem.addConstraint(CheckIfOnGroup, ([id for id in redMobFirstYearIds],redMobSection1))
+        for seat in redMobSection1:
+            problem.addConstraint(CheckIfOnGroup, ([id for id in redMobFirstYearIds],seat))
     if not redMobSecondYearIds:
         print("redMobSecondYearIds is empty")
     else:
-        problem.addConstraint(CheckIfOnGroup, ([id for id in redMobSecondYearIds],redMobSection2))
+        for seat in redMobSection2:
+            problem.addConstraint(CheckIfOnGroup, ([id for id in redMobSecondYearIds],seat))
     solutions = problem.getSolutions()
     
     #Not next to reduced mobility

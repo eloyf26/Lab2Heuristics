@@ -82,7 +82,6 @@ def main():
     #Not adjacent to troublesome
     problem.addConstraint(NotAdjacentSeatCondition, ([id1 for id1 in troubleStudentIds],[id2 for id2 in studentIds]))
     #Silbling in same section
-    solutions = problem.getSolutions()
 
 
 def CheckIfOnGroup(a,group):

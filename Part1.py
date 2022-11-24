@@ -97,25 +97,26 @@ def main():
     for pair in siblingPairs:
         for id in realSecond:
             if pair[0] == id:
-                problem.addConstraint(NotSameYearCondition,(pair[1],pair[0]))
+                problem.addConstraint(SiblingsNextToEachOther,(pair[1],pair[0]))
             elif pair[1] == id:
-                problem.addConstraint(NotSameYearCondition,(pair[0],pair[1]))
+                problem.addConstraint(SiblingsNextToEachOther,(pair[0],pair[1]))
             else:
-                problem.addConstraint(lambda a,b: not(NotNextToSeatCondition),(pair[0],pair[1],True))
+                problem.addConstraint(NextToEachOther,(pair[0],pair[1]))
     solution = problem.getSolution()
     print(solution)
 
-def NotSameYearCondition(youngSibling, oldSibling):
-    return SiblingsNextToEachOther(youngSibling, oldSibling, False)
+# def NotSameYearCondition(youngSibling, oldSibling):
+#     return SiblingsNextToEachOther(youngSibling, oldSibling, False)
 
-def SiblingsNextToEachOther(youngSibling, oldSibling, sameYear):   
-    if (not sameYear):
-        if ((oldSibling % 2 == 0) and (oldSibling - youngSibling == 1)):
-            return True
-        elif ((oldSibling % 2 == 1) and (oldSibling - youngSibling == -1)):
-            return True
-    else:
-        return not(NotNextToSeatCondition(oldSibling,youngSibling))
+def SiblingsNextToEachOther(youngSibling, oldSibling):   
+    closeToAisleEven = [30,26,22,18,14,10,6,2]
+    closeToAisleOdd = [31,27,23,19,15,11,7,3]
+    if ((oldSibling in closeToAisleEven) and (oldSibling - youngSibling == 1)):
+        return True
+    elif ((oldSibling in closeToAisleOdd) and (oldSibling - youngSibling == -1)):
+        return True
+    else:   
+        return False
 
 def moveSiblingsToSameSection(siblingPairs,firstYearStudentIds,secondYearStudentIds):
     realSecond =[]
@@ -142,6 +143,9 @@ def GetSiblingPairs(students):
                 siblings.append([student[0],student[4]])    
     
     return siblings
+
+def NextToEachOther(a,b):
+    return not NotNextToSeatCondition(a,b)
 
 def NotNextToSeatCondition(a,b):
     #Odd and even numbers have different adjacent seats (not symmetric)

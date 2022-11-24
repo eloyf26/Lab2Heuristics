@@ -66,16 +66,29 @@ def main():
     #1 per seat
     problem.addConstraint(AllDifferentConstraint(),[id for id in studentIds])
     #Reduced Mobility seats
-    problem.addConstraint(lambda a: a in redMobSection1 == True, [id for id in redMobFirstYearIds])
-    problem.addConstraint(lambda a: a in redMobSection2 == True, [id for id in redMobSecondYearIds])
+    for id in redMobFirstYearIds:
+        problem.addConstraint(lambda a: a in redMobSection1, id)
+    for id in redMobSecondYearIds:
+        problem.addConstraint(lambda a: a in redMobSection2, id)
+    
     #Not next to reduced mobility
-    problem.addConstraint(NotNextToSeatCondition(), ([id1 for id1 in redMobStudentIds],[id2 for id2 in studentIds]))
+    for id1 in redMobFirstYearIds + redMobSecondYearIds:
+        for id2 in studentIds:
+            problem.addConstraint(NotNextToSeatCondition, (id1,id2))
     #First year seats
-    problem.addConstraint(lambda a: a in section1 == True, [id for student[0] in firstYearStudentIds])
+    for id in firstYearStudentIds:
+        problem.addConstraint(lambda a: a in section1, id)
     #Second year seats
-    problem.addConstraint(lambda a: a in section2 == True, [id for student[0] in secondYearStudentIds])
+    for id in secondYearStudentIds:
+        problem.addConstraint(lambda a: a in section2, id)
     #Not adjacent to troublesome
-    problem.addConstraint(NotAdjacentSeatCondition(), ([id1 for id1 in troubleStudentIds],[id2 for id2 in studentIds]))
+    for id1 in troubleStudentIds:
+        for id2 in studentIds:
+            if id1 != id2:
+                problem.addConstraint(NotAdjacentSeatCondition,(id1,id2))
+    solution = problem.getSolution()
+    print(solution)
+    solution = 0
     #Silbling in same section
 
     
@@ -100,33 +113,17 @@ def NotNextToSeatCondition(a,b):
     return True
 
 def NotAdjacentSeatCondition(a,b):
-    #Divide into section 1 and 2
-    matrixSection1 = np.matrix([[13,9,5,1],[14,10,6,2],[15,11,7,3],[16,12,8,4]])
-    matrixSection2 = np.matrix([[29,25,21,17],[30,26,22,18],[31,27,23,19],[32,28,24,20]])
-
-    if (a in range(1,17)):
-        #Check A is not adjacent to B
-        if (b in adj_finder(matrixSection1,a)):
-            return False
-    else:
-        if (b in adj_finder(matrixSection2,a)):
-            return False
+    totalMatrix = np.matrix([[29,25,21,17,13,9,5,1],[30,26,22,18,14,10,6,2],[31,27,23,19,15,11,7,3],[32,28,24,20,16,12,8,4]])
+    if (b in adj_finder(totalMatrix,a)):
+        return False
     return True
 
 def adj_finder(matrix, element):
-    position = matrix.where(element)
-    adj = []
-    
-    for dx in range(-1, 2):
-        for dy in range(-1, 2):
-            rangeX = range(0, matrix.shape[0])  # X bounds
-            rangeY = range(0, matrix.shape[1])  # Y bounds
-            
-            (newX, newY) = (position[0]+dx, position[1]+dy)  # adjacent cell
-            
-            if (newX in rangeX) and (newY in rangeY) and (dx, dy) != (0, 0):
-                adj.append((newX, newY))
-    
+    position = np.where(matrix == element)
+    mat = np.asarray(matrix)
+    a, b = (position[0][0], position[1][0]) # the index of the element 
+    adj = [mat[i][j] for i in range(a-1, a+2) for j in range(b-1, b+2) if i > -1 and j > -1 and j < len(mat[0]) and i < len(mat)]
+    adj.remove(element)
     return adj
 
 def intersection(lst1, lst2):

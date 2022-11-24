@@ -48,6 +48,10 @@ def main():
     for pair in siblingPairs:
         siblingIds.append(pair[0])
         siblingIds.append(pair[1])
+    troublesomeSiblingPairs = []
+    troublesomeSiblingIds = []
+    redMobSiblingPair = []
+
 
     for student in students:
         studentIds.append(student[0])
@@ -62,8 +66,16 @@ def main():
         if (IsReducedMobility(student)):
             redMobStudentIds.append(student[0])
 
-    firstYearStudentIds,secondYearStudentIds,realSecond = moveSiblingsToSameSection(siblingPairs,firstYearStudentIds,secondYearStudentIds)
+    for pair in siblingPairs:
+        if(pair[0] in troubleStudentIds and pair[1] in troubleStudentIds):
+            troublesomeSiblingPairs.append(pair)
+            troublesomeSiblingIds.append(pair[0])
+            troublesomeSiblingIds.append(pair[1])
+        if(pair[0] in redMobStudentIds or pair[1] in redMobStudentIds):
+            redMobSiblingPair.append(pair)
+    troubleStudentIds = difference(troubleStudentIds,troublesomeSiblingIds)
 
+    firstYearStudentIds,secondYearStudentIds,realSecond = moveSiblingsToSameSection(siblingPairs,firstYearStudentIds,secondYearStudentIds)
     redMobFirstYearIds = intersection(redMobStudentIds,firstYearStudentIds)
     redMobSecondYearIds = intersection(redMobStudentIds,secondYearStudentIds)
 
@@ -88,26 +100,33 @@ def main():
         problem.addConstraint(lambda a: a in section2, id)
     #Not adjacent to troublesome
     for id1 in troubleStudentIds:
-        for id2 in troubleStudentIds + redMobStudentIds:
+        for id2 in Union(troubleStudentIds,redMobStudentIds):
             if id1 != id2:
                 problem.addConstraint(NotAdjacentSeatCondition,(id1,id2))
-    solution = problem.getSolution()
-    print(solution)
     #Silbling next to each other
-    for pair in siblingPairs:
-        for id in realSecond:
-            if pair[0] == id:
-                problem.addConstraint(SiblingsNextToEachOther,(pair[1],pair[0]))
-            elif pair[1] == id:
-                problem.addConstraint(SiblingsNextToEachOther,(pair[0],pair[1]))
-            else:
-                problem.addConstraint(NextToEachOther,(pair[0],pair[1]))
+    for pair in difference(siblingPairs,redMobSiblingPair):
+        if realSecond:
+            for id in realSecond:
+                if pair[0] == id:
+                    problem.addConstraint(SiblingsNextToEachOther,(pair[1],pair[0]))
+                elif pair[1] == id:
+                    problem.addConstraint(SiblingsNextToEachOther,(pair[0],pair[1]))
+                else:
+                    problem.addConstraint(NextToEachOther,(pair[0],pair[1]))
+        else:
+            problem.addConstraint(NextToEachOther,(pair[0],pair[1]))
+
+    #Troublesome siblings
+    for pair in troublesomeSiblingPairs:
+        for id in Union(troubleStudentIds,redMobStudentIds):
+            if (id not in troublesomeSiblingIds):
+                problem.addConstraint(NotAdjacentToTroubleSiblings,(pair[0],pair[1],id))
+    #Reduced movility sibling
+
     solution = problem.getSolution()
     print(solution)
 
-# def NotSameYearCondition(youngSibling, oldSibling):
-#     return SiblingsNextToEachOther(youngSibling, oldSibling, False)
-
+    
 def SiblingsNextToEachOther(youngSibling, oldSibling):   
     closeToAisleEven = [30,26,22,18,14,10,6,2]
     closeToAisleOdd = [31,27,23,19,15,11,7,3]
@@ -155,6 +174,15 @@ def NotNextToSeatCondition(a,b):
         return False
     return True
 
+def NotAdjacentToTroubleSiblings(sibling1,sibling2, id):
+    totalMatrix = np.matrix([[29,25,21,17,13,9,5,1],[30,26,22,18,14,10,6,2],[31,27,23,19,15,11,7,3],[32,28,24,20,16,12,8,4]])
+    adjToSibling1 = adj_finder(totalMatrix, sibling1)
+    adjToSibling2 = adj_finder(totalMatrix, sibling2)
+    adjToSiblings = Union(adjToSibling1,adjToSibling2)
+    if id in adjToSiblings:
+        return False
+    return True
+
 def NotAdjacentSeatCondition(a,b):
     totalMatrix = np.matrix([[29,25,21,17,13,9,5,1],[30,26,22,18,14,10,6,2],[31,27,23,19,15,11,7,3],[32,28,24,20,16,12,8,4]])
     if (b in adj_finder(totalMatrix,a)):
@@ -172,6 +200,18 @@ def adj_finder(matrix, element):
 def intersection(lst1, lst2):
     lst3 = [value for value in lst1 if value in lst2]
     return lst3    
+
+def Union(lst1, lst2):
+    final_list = list(set(lst1) | set(lst2))
+    return final_list
+
+def difference(list1, list2):
+    diff = []
+    for element in list1:
+        if element not in list2:
+            diff.append(element)
+    
+    return diff
 
 #Return certain 'characteristic' based on studentId 
 def studentCharacteristic(characteristic, studentId, students):

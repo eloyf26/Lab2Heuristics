@@ -68,18 +68,20 @@ def main():
     if not studentIds:
         print("StudentIds is empty")
     else:
-        problem.addConstraint(AllDifferentConstraint(),[id for id in studentIds])
+        problem.addConstraint(AllDifferentConstraint())
     #Reduced Mobility seats
     if not redMobFirstYearIds:
         print("redMobFirstYearIds is empty")
     else:
-        for seat in redMobSection1:
-            problem.addConstraint(CheckIfOnGroup, ([id for id in redMobFirstYearIds],seat))
+        for id in redMobFirstYearIds:
+            problem.addConstraint(isRedMobFirstyear,id)
+            #problem.addConstraint(CheckIfOnGroup, ([id for id in redMobFirstYearIds],redMobSection1))
     if not redMobSecondYearIds:
         print("redMobSecondYearIds is empty")
     else:
-        for seat in redMobSection2:
-            problem.addConstraint(CheckIfOnGroup, ([id for id in redMobSecondYearIds],seat))
+        for id in redMobSecondYearIds:
+            problem.addConstraint(isRedMobSecondyear,id)
+            #problem.addConstraint(CheckIfOnGroup, ([id for id in redMobSecondYearIds],redMobSection2))
     solutions = problem.getSolutions()
     
     #Not next to reduced mobility
@@ -94,8 +96,12 @@ def main():
     #Silbling in same section
 
 
-def CheckIfOnGroup(a,group):
-    return (a in group)
+def isRedMobFirstyear(a):
+    return (a in redMobSection1)
+
+def isRedMobSecondyear(a):
+    return (a in redMobSection2)
+
 
 def GetSiblingPairs(students):
     siblings = []
@@ -192,4 +198,36 @@ def IsFirstYear(student):
 
 
 
+reducedMobility = [1,2,3,4,13,14,15,16,17,18,19,20]
+section1 = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+section2 = [17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]
+redMobSection1 = intersection(reducedMobility,section1)
+redMobSection2 = intersection(reducedMobility,section2)
+
+students = ReadInputFile()
+#We divide the domain in different sets so that we can work easier with different type of students
+studentIds = []
+redMobStudentIds = []
+firstYearStudentIds = []
+secondYearStudentIds = []
+troubleStudentIds = []
+siblingPairs = GetSiblingPairs(students)
+
+for student in students:
+    studentIds.append(student[0])
+    if (IsFirstYear(student)):
+        firstYearStudentIds.append(student[0])
+    else:
+        secondYearStudentIds.append(student[0])
+
+    if (IsTroublesome(student)):
+        troubleStudentIds.append(student[0])
+
+    if (IsReducedMobility(student)):
+        redMobStudentIds.append(student[0])
+
+redMobFirstYearIds = intersection(redMobStudentIds,firstYearStudentIds)
+redMobSecondYearIds = intersection(redMobStudentIds,secondYearStudentIds)
+
 main()
+

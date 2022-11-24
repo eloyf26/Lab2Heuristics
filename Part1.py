@@ -44,6 +44,10 @@ def main():
     secondYearStudentIds = []
     troubleStudentIds = []
     siblingPairs = GetSiblingPairs(students)
+    siblingIds = [] 
+    for pair in siblingPairs:
+        siblingIds.append(pair[0])
+        siblingIds.append(pair[1])
 
     for student in students:
         studentIds.append(student[0])
@@ -58,6 +62,8 @@ def main():
         if (IsReducedMobility(student)):
             redMobStudentIds.append(student[0])
 
+    firstYearStudentIds,secondYearStudentIds,realSecond = moveSiblingsToSameSection(siblingPairs,firstYearStudentIds,secondYearStudentIds)
+
     redMobFirstYearIds = intersection(redMobStudentIds,firstYearStudentIds)
     redMobSecondYearIds = intersection(redMobStudentIds,secondYearStudentIds)
 
@@ -69,8 +75,7 @@ def main():
     for id in redMobFirstYearIds:
         problem.addConstraint(lambda a: a in redMobSection1, id)
     for id in redMobSecondYearIds:
-        problem.addConstraint(lambda a: a in redMobSection2, id)
-    
+        problem.addConstraint(lambda a: a in redMobSection2, id)   
     #Not next to reduced mobility
     for id1 in redMobFirstYearIds + redMobSecondYearIds:
         for id2 in studentIds:
@@ -83,15 +88,49 @@ def main():
         problem.addConstraint(lambda a: a in section2, id)
     #Not adjacent to troublesome
     for id1 in troubleStudentIds:
-        for id2 in studentIds:
+        for id2 in troubleStudentIds + redMobStudentIds:
             if id1 != id2:
                 problem.addConstraint(NotAdjacentSeatCondition,(id1,id2))
     solution = problem.getSolution()
     print(solution)
-    solution = 0
-    #Silbling in same section
+    #Silbling next to each other
+    for pair in siblingPairs:
+        for id in realSecond:
+            if pair[0] == id:
+                problem.addConstraint(NotSameYearCondition,(pair[1],pair[0]))
+            elif pair[1] == id:
+                problem.addConstraint(NotSameYearCondition,(pair[0],pair[1]))
+            else:
+                problem.addConstraint(lambda a,b: not(NotNextToSeatCondition),(pair[0],pair[1],True))
+    solution = problem.getSolution()
+    print(solution)
 
-    
+def NotSameYearCondition(youngSibling, oldSibling):
+    return SiblingsNextToEachOther(youngSibling, oldSibling, False)
+
+def SiblingsNextToEachOther(youngSibling, oldSibling, sameYear):   
+    if (not sameYear):
+        if ((oldSibling % 2 == 0) and (oldSibling - youngSibling == 1)):
+            return True
+        elif ((oldSibling % 2 == 1) and (oldSibling - youngSibling == -1)):
+            return True
+    else:
+        return not(NotNextToSeatCondition(oldSibling,youngSibling))
+
+def moveSiblingsToSameSection(siblingPairs,firstYearStudentIds,secondYearStudentIds):
+    realSecond =[]
+    for pair in siblingPairs:
+        if pair[0] in firstYearStudentIds and pair[1] in secondYearStudentIds:
+            firstYearStudentIds.append(pair[1])
+            realSecond.append(pair[1])
+            secondYearStudentIds.remove(pair[1])
+        elif pair[1] in firstYearStudentIds and pair[0] in secondYearStudentIds:
+            firstYearStudentIds.append(pair[0])
+            realSecond.append(pair[0])
+            secondYearStudentIds.remove(pair[0])
+
+    return firstYearStudentIds,secondYearStudentIds,realSecond
+
 def GetSiblingPairs(students):
     siblings = []
     for student in students:

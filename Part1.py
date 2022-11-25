@@ -5,11 +5,18 @@ import numpy as np
 
 def ReadInputFile():
 
-    studentsTxt = open('Students.txt','r')
+    studentsTxt = open('Input files\Students16Firstyear.txt','r')
     students = []
     for line in studentsTxt.read().splitlines():
         s = line.split(",")
         students.append(s)
+    for student in students:
+        if student[0]:
+            student[0] = int(student[0])
+            student[1] = int(student[1])
+            student[4] = int(student[4])
+        else:
+            students.remove(student)
 
     studentsTxt.close()
 
@@ -20,22 +27,6 @@ def ReadInputFile():
 def main():
 
     students = ReadInputFile()
-
-    #Setting up initial variables
-    numSeats = 32
-    seats = range(1,numSeats + 1)
-    
-  
-    problem = Problem()
-    for student in students:
-        problem.addVariables(student[0],seats)
-
-    reducedMobility = [1,2,3,4,13,14,15,16,17,18,19,20]
-    section1 = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
-    section2 = [17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]
-    redMobSection1 = intersection(reducedMobility,section1)
-    redMobSection2 = intersection(reducedMobility,section2)
-
 
     #We divide the domain in different sets so that we can work easier with different type of students
     studentIds = []
@@ -66,6 +57,10 @@ def main():
         if (IsReducedMobility(student)):
             redMobStudentIds.append(student[0])
 
+    #Setting up initial variables
+    numSeats = 32
+    seats = range(1,numSeats + 1)
+    
     for pair in siblingPairs:
         if(pair[0] in troubleStudentIds and pair[1] in troubleStudentIds):
             troublesomeSiblingPairs.append(pair)
@@ -78,6 +73,16 @@ def main():
     firstYearStudentIds,secondYearStudentIds,realSecond = moveSiblingsToSameSection(siblingPairs,firstYearStudentIds,secondYearStudentIds)
     redMobFirstYearIds = intersection(redMobStudentIds,firstYearStudentIds)
     redMobSecondYearIds = intersection(redMobStudentIds,secondYearStudentIds)
+
+    problem = Problem()
+    
+    problem.addVariables(studentIds,seats)
+
+    reducedMobility = [1,2,3,4,13,14,15,16,17,18,19,20]
+    section1 = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+    section2 = [17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]
+    redMobSection1 = intersection(reducedMobility,section1)
+    redMobSection2 = intersection(reducedMobility,section2)
 
     #Defining Constraints:
 

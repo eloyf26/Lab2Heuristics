@@ -10,13 +10,13 @@ def ReadInputFile():
     for line in studentsTxt.read().splitlines():
         s = line.split(",")
         students.append(s)
-    for student in students:
-        if student[0]:
-            student[0] = int(student[0])
-            student[1] = int(student[1])
-            student[4] = int(student[4])
-        else:
-            students.remove(student)
+    # for student in students:
+    #     if student[0]:
+    #         student[0] = int(student[0])
+    #         student[1] = int(student[1])
+    #         student[4] = int(student[4])
+    #     else:
+    #         students.remove(student)
 
     studentsTxt.close()
 

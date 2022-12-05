@@ -1,11 +1,12 @@
 from constraint import *
 import numpy as np
+import sys
 
 #Function to obtain the Students from the input file
 
-def ReadInputFile():
+def ReadInputFile(path):
 
-    studentsTxt = open('Input files\Students16Firstyear.txt','r')
+    studentsTxt = open(path,'r')
     students = []
     for line in studentsTxt.read().splitlines():
         s = line.split(",")
@@ -24,9 +25,9 @@ def ReadInputFile():
 
 
 
-def main():
+def main(path):
 
-    students = ReadInputFile()
+    students = ReadInputFile(path)
 
     #We divide the domain in different sets so that we can work easier with different type of students
     studentIds = []
@@ -45,6 +46,7 @@ def main():
 
 
     for student in students:
+        
         studentIds.append(student[0])
         if (IsFirstYear(student)):
             firstYearStudentIds.append(student[0])
@@ -75,8 +77,10 @@ def main():
     redMobSecondYearIds = intersection(redMobStudentIds,secondYearStudentIds)
 
     problem = Problem()
-    
-    problem.addVariables(studentIds,seats)
+
+    for id in studentIds:
+        problem.addVariable(id,seats)
+        
 
     reducedMobility = [1,2,3,4,13,14,15,16,17,18,19,20]
     section1 = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
@@ -90,19 +94,19 @@ def main():
     problem.addConstraint(AllDifferentConstraint(),[id for id in studentIds])
     #Reduced Mobility seats
     for id in redMobFirstYearIds:
-        problem.addConstraint(lambda a: a in redMobSection1, id)
+        problem.addConstraint(lambda a: a in redMobSection1, [id])
     for id in redMobSecondYearIds:
-        problem.addConstraint(lambda a: a in redMobSection2, id)   
+        problem.addConstraint(lambda a: a in redMobSection2, [id])   
     #Not next to reduced mobility
     for id1 in redMobFirstYearIds + redMobSecondYearIds:
         for id2 in studentIds:
             problem.addConstraint(NotNextToSeatCondition, (id1,id2))
     #First year seats
     for id in firstYearStudentIds:
-        problem.addConstraint(lambda a: a in section1, id)
+        problem.addConstraint(lambda a: a in section1, [id])
     #Second year seats
     for id in secondYearStudentIds:
-        problem.addConstraint(lambda a: a in section2, id)
+        problem.addConstraint(lambda a: a in section2, [id])
     #Not adjacent to troublesome
     for id1 in troubleStudentIds:
         for id2 in Union(troubleStudentIds,redMobStudentIds):
@@ -128,8 +132,8 @@ def main():
                 problem.addConstraint(NotAdjacentToTroubleSiblings,(pair[0],pair[1],id))
     #Reduced movility sibling
 
-    solution = problem.getSolution()
-    print(solution)
+    solution = problem.getSolutions()
+    print(len(solution))
 
     
 def SiblingsNextToEachOther(youngSibling, oldSibling):   
@@ -258,5 +262,6 @@ def IsFirstYear(student):
         raise Exception("Year format is not valid")
 
 
-
-main()
+if __name__ == "__main__":
+    path = str(sys.argv[1])
+    main(path)

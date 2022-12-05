@@ -1,33 +1,33 @@
 from constraint import *
 import numpy as np
 import sys
+import os 
+
+clear = lambda: os.system('cls')
+clear()
 
 #Function to obtain the Students from the input file
-
 def ReadInputFile(path):
 
     studentsTxt = open(path,'r')
     students = []
+    studentsForOutput = {}
     for line in studentsTxt.read().splitlines():
+
         s = line.split(",")
         students.append(s)
-    # for student in students:
-    #     if student[0]:
-    #         student[0] = int(student[0])
-    #         student[1] = int(student[1])
-    #         student[4] = int(student[4])
-    #     else:
-    #         students.remove(student)
+        studentsForOutput[s[0]] = s[0:5]
 
     studentsTxt.close()
 
-    return students
+    return students, studentsForOutput
 
 
 
-def main(path):
+def main(pathToInput):
 
-    students = ReadInputFile(path)
+    print(pathToInput)
+    students, studentsForOutput = ReadInputFile(pathToInput)
 
     #We divide the domain in different sets so that we can work easier with different type of students
     studentIds = []
@@ -133,7 +133,26 @@ def main(path):
     #Reduced movility sibling
 
     solution = problem.getSolutions()
-    print(len(solution))
+
+    outputToFile(pathToInput, solution, studentsForOutput)
+
+    
+
+def outputToFile(pathToInput, solution, students):
+    pathToOutput = pathToInput[0:-3] + "output"
+
+    # p = Path(pathToInput)
+    # p.rename(p.with_suffix('.output'))
+    outputFile = open(pathToOutput,'w')
+    outputFile.write("Number of solutions: " + str(len(solution)) + "\n")
+    newsolution = {}
+    for sol in solution:
+        for pair in sol.items():
+            #Find data about student
+            newkey = pair[0]+ students[pair[0]][2] + students[pair[0]][3]
+            newsolution[newkey] = pair[1]
+        
+        outputFile.write( repr(newsolution) + "\n")
 
     
 def SiblingsNextToEachOther(youngSibling, oldSibling):   

@@ -53,16 +53,14 @@ def obtainseats(seatsarray):
 
     return seat
 
+
+
 class Node:
     def __init__(self,state,pool,heuristic):
 
         self.state = state
         self.pool = pool
-        if heuristic == 1:
-            self.heuristic = Heuristic1(state)
-        if heuristic == 2:
-            self.heuristic = Heuristic2(state)
-        self.neighbours = neighbours(state,pool,heuristic)
+        self.heuristic = Heuristic1(state)
 
     def __lt__(self, other):
         return True
@@ -82,24 +80,25 @@ def Astar(initial):
     queue = PriorityQueue()
     queue.put(initial,0)
     cost_so_far = {initial: 0}
+    #came_from = {initial: None}
     #cost_so_far = 0
-    solution = []
+    current = None
     while not queue.empty():
         current = queue.get()
-
         if FinalState(current):
-            return
+           break
 
-        for next in current.neighbours:
+        for next in neighbours(current.state,current.pool,current.heuristic): 
             new_cost = cost_so_far[current] + 1
             #new_cost = cost_so_far + 1
             if next not in cost_so_far or new_cost < cost_so_far[next]:
                 cost_so_far[next] = new_cost
                 fn = new_cost + current.heuristic
-                print(current.heuristic)
+                #print(current.heuristic)
                 queue.put(next,fn)
+                #came_from[next] = current
 
-    return cost_so_far
+    return cost_so_far,current.state
 
 #Function to obtain the next possibilities of students on the Queue
 def neighbours(state,pool,heuristic):
@@ -112,13 +111,11 @@ def neighbours(state,pool,heuristic):
             count += 1
 
     for p in pool:
-        #print(len(state))
-        #print(count)
-        state[count-1] = p
+        state[count] = p
         if CheckState(state):
             newpool = []
             for x in pool:
-                if x != p:
+                if x.id != p.id:
                     newpool.append(x)
 
             node = Node(state,newpool,heuristic)
@@ -133,7 +130,7 @@ def Heuristic1(state):
     cost = 0   
     reduced = False  
     for student in state:
-
+        
         if student.empty == True:
             return cost 
 
@@ -141,12 +138,14 @@ def Heuristic1(state):
         if reduced == False:
             if student.reduced == True:
                 cost = cost + 3
+                reduced = True
             else:
                 cost = cost + 1
 
         #if prev Student is reduced(then next has to be normal so the cost of the student is the same as the reduced)
-        if reduced == True:
+        elif reduced == True:
             cost = cost + 3
+            reduced = False
         
     return cost
 
@@ -261,16 +260,17 @@ def statistics(pathfile,time,cost,length):
 def main(students,heuristic):
 
     # Read the file
-    students  = ReadInputFile(students) #pool of students
+    students  = ReadInputFile(students) #array of students
     
     lenQ = len(students) 
     empty = Student(empty=True)
     # Initialize the start State which is queue of empty students
     initState = [empty] * lenQ
 
-    initialnode = Node (initState,students,heuristic)
-    cost = Astar(initialnode)
-    solution(students,students,students)
+    initialnode = Node(initState,students,heuristic)
+    cost,finalstate = Astar(initialnode)
+    
+    solution(students,students,finalstate)
     return
 
 if __name__ == '__main__':

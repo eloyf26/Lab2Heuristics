@@ -31,10 +31,12 @@ def ReadInputFile(input):
                 trouble = True
             else:
                 trouble  = False
+
             if s2[0][2] == 'R':
                 reduced = True
             else:
                 reduced = False
+    
         student = Student(id,trouble,reduced,seat,empty=False)
         students.append(student)
 
@@ -86,17 +88,19 @@ def Astar(initial):
     while not queue.empty():
         current = queue.get()
         if FinalState(current):
-           break
+            print("Soultion Found")
+            break
 
-        for next in neighbours(current.state,current.pool,current.heuristic): 
-            new_cost = cost_so_far[current] + 1
-            #new_cost = cost_so_far + 1
-            if next not in cost_so_far or new_cost < cost_so_far[next]:
-                cost_so_far[next] = new_cost
-                fn = new_cost + current.heuristic
-                #print(current.heuristic)
-                queue.put(next,fn)
-                #came_from[next] = current
+        nextinQueue = neighbours(current.state,current.pool,current.heuristic)
+        for next in nextinQueue : 
+                new_cost = cost_so_far[current] + 1
+                #print(CheckState(next.state))
+                #new_cost = cost_so_far + 1
+                if (next not in cost_so_far or new_cost < cost_so_far[next]):    
+                    cost_so_far[next] = new_cost
+                    fn = new_cost + current.heuristic
+                    queue.put(next,fn)
+                    #came_from[next] = current
 
     return cost_so_far,current.state
 
@@ -109,17 +113,18 @@ def neighbours(state,pool,heuristic):
             break
         else:
             count += 1
+    #if its full then there are no neighbours
+    if len(state) != count:
+        for p in pool:
+            state[count] = p
+            if CheckState(state):
+                newpool = []
+                for x in pool:
+                    if x not in state:
+                        newpool.append(x)
 
-    for p in pool:
-        state[count] = p
-        if CheckState(state):
-            newpool = []
-            for x in pool:
-                if x.id != p.id:
-                    newpool.append(x)
-
-            node = Node(state,newpool,heuristic)
-            options.append(node)
+                node = Node(state,newpool,heuristic)
+                options.append(node)
 
     return options
 
@@ -181,7 +186,7 @@ def CheckState(state):
     for student in state:
         if student.reduced == True and reduced == True:
             return False
-        reduced  = student.reduced
+        reduced = student.reduced
 
     
     return True
@@ -207,14 +212,14 @@ def solution(pathfile,initial,final):
     for student in initial:
         outputFile.write("'")
         outputFile.write(student.id)
-        if student.reduced == False:
-            outputFile.write("X")
-        else:
-            outputFile.write("R")
         if student.trouble == False:
             outputFile.write("X")
         else:
             outputFile.write("C")
+        if student.reduced == False:
+            outputFile.write("X")
+        else:
+            outputFile.write("R")
         outputFile.write("': ")
         outputFile.write(str(student.seat))
         if student != last:
@@ -229,14 +234,14 @@ def solution(pathfile,initial,final):
     for student in final:
         outputFile.write("'")
         outputFile.write(student.id)
-        if student.reduced == False:
-            outputFile.write("X")
-        else:
-            outputFile.write("R")
         if student.trouble == False:
             outputFile.write("X")
         else:
             outputFile.write("C")
+        if student.reduced == False:
+            outputFile.write("X")
+        else:
+            outputFile.write("R")
         outputFile.write("': ")
         outputFile.write(str(student.seat))
         if student != last:
@@ -269,7 +274,6 @@ def main(students,heuristic):
 
     initialnode = Node(initState,students,heuristic)
     cost,finalstate = Astar(initialnode)
-    
     solution(students,students,finalstate)
     return
 

@@ -142,14 +142,14 @@ def Heuristic1(state):
         #Case where prev student is normal so we only calculate the cost of the student    
         if reduced == False:
             if student.reduced == True:
-                cost = cost + 3
+                cost +=  3
                 reduced = True
             else:
-                cost = cost + 1
+                cost += 1
 
         #if prev Student is reduced(then next has to be normal so the cost of the student is the same as the reduced)
         elif reduced == True:
-            cost = cost + 3
+            cost += 3
             reduced = False
         
     return cost
@@ -161,7 +161,29 @@ def Heuristic1(state):
 def Heuristic2(state):
 
     cost  = 0
+    trouble = []
 
+    for i in range(len(state)):
+        tempcost = 0
+        if state[i].trouble == True:
+            tempcost = 2
+            trouble.append(state[i].seat) 
+        else:
+            tempcost = 1
+
+        #not firstudent
+        if i != 0: 
+            if state[i-1].trouble == True:
+                tempcost *= 2
+        #not laststudent
+        if i != len(state) - 1: 
+            if state[i+1].trouble == True:
+                tempcost *= 2
+        for t in trouble:
+            if t < state[i].seat:
+                tempcost *= 2
+
+        cost += tempcost
     return cost
 
     #Troule = x2 behind and ahead
@@ -274,6 +296,7 @@ def main(students,heuristic):
 
     initialnode = Node(initState,students,heuristic)
     cost,finalstate = Astar(initialnode)
+    print(Heuristic1(finalstate))
     solution(students,students,finalstate)
     return
 

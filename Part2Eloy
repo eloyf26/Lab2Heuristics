@@ -154,21 +154,30 @@ class AstarSolver:
         self.priorityQueu.put((0,count,startState))
         #While not having path and priorityqueu size not empty
         while (not self.path and self.priorityQueu.qsize()):
-            closestChild = self.priorityQueu.get()[2]
+            state_touple = self.priorityQueu.get()
+            closestChild = state_touple[2]
+            if count != 0:
+                print ("Expanded student: " + str(closestChild.value.id) + " Expanded STATE: " + str(state_touple[1]))
+            print(str(self.priorityQueu.qsize()) + " start")
             closestChild.CreateChildren()
-            self.visitedQueu.append(closestChild.value)
+            self.visitedQueu.append(closestChild)
             for child in closestChild.children:
-                if child.value not in self.visitedQueu:
+                print ("Checking child: " + str(child.value.id))
+                if child not in self.visitedQueu:
                     count += 1
                     self.cost = child.heuristicCost + child.pathCost
+                    print(str(len(child.missingList)) + " Missing list")
+                    print(str(child.heuristicCost) + " Heuristic cost" )
+                    print(str(self.cost) + " child TOTAL COST" )
                     if not child.heuristicCost:
                         self.path = child.path
                         break
                     self.priorityQueu.put((self.cost, count, child))
+            print(str(self.priorityQueu.qsize()) + " end")
         if not self.path:
             print ("This student combination is not possible")
             return
-        return self.path
+        return self
 
 #Functions to read the input file in appropiate format
 def obtainseats(seatsarray):

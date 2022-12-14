@@ -282,8 +282,6 @@ def IsFirstYear(student):
         raise Exception("Year format is not valid")
 
 
-# if __name__ == "__main__":
-#     path = str(sys.argv[1])
-#    main(path)
-
-main(r"C:\Users\eloyfernandez\Documents\Uni\Heuristica\Lab2\Lab2Heuristics\InputOutputFiles\students01.txt")
+if __name__ == "__main__":
+    path = str(sys.argv[1])
+    main(path)

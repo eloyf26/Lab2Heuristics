@@ -11,6 +11,13 @@ class Student():
 
     #get cost of single student
     def GetStudentCost(self,StudentPath):
+        #Start state case
+        if len(StudentPath) < 2:
+            if self.reduced:
+                return 3
+            else:
+                return 1
+
         prevStudent = StudentPath[-2]
         # 4 different cases (there is some redundancy in the if statement)
         if (not self.reduced) and (not self.trouble):
@@ -24,16 +31,19 @@ class Student():
                 elif prevStudent.trouble:
                     return 2
                 else:
-                    raise Exception("Previous student not in correct category v1")
+                    print("temporal solution for 'no solution' v2")
+                    return 10000000
         elif self.reduced and self.trouble:
             if (not prevStudent.reduced) and (not prevStudent.trouble):
                 #duplicate previous student value + current student
                 return self.GetStudentCost(StudentPath[:-2]) + 3
             else:
                 if prevStudent.reduced and prevStudent.trouble:
-                    raise Exception("temporal solution for 'no solution' v1")
+                    print("temporal solution for 'no solution' v1")
+                    return 10000000
                 elif prevStudent.reduced:
-                    raise Exception("temporal solution for 'no solution' v2")
+                    print("temporal solution for 'no solution' v2")
+                    return 10000000
                 elif prevStudent.trouble:
                     return self.GetStudentCost(StudentPath[:-2]) + 3
                 else:
@@ -43,9 +53,11 @@ class Student():
                 return 3
             else:
                 if prevStudent.reduced and prevStudent.trouble:
-                    raise Exception("temporal solution for 'no solution' v1")
+                    print("temporal solution for 'no solution' v1")
+                    return 10000000
                 elif prevStudent.reduced:
-                    raise Exception("temporal solution for 'no solution' v2")
+                    print("temporal solution for 'no solution' v2")
+                    return 10000000
                 elif prevStudent.trouble:
                     return 6
                 else:
@@ -69,7 +81,7 @@ class State(object):
             self.start = parent.start
             self.goal = parent.goal
         else:
-            self.path = [value]
+            self.path = []
             self.start = start
             self.goal = goal
 
@@ -85,16 +97,17 @@ class State_Bus_Distribution(State):
     def __init__(self, parent, value, missingList, start, goal):
         super(State_Bus_Distribution,self).__init__(parent, start, goal, value)
         self.pathCost = self.GetPathCost()
-        if self.value not in missingList:
-            self.missingList = missingList
+        copyList = missingList[:]
+        if self.value not in copyList:
+            self.missingList = copyList
         else:
-            self.missingList = missingList.remove(self.value)
-        self.heuristicCost = self.GetHeuristicCost()
-        self.children = self.CreateChildren()
+            copyList.remove(self.value)
+            self.missingList = copyList
+        self.heuristicCost = self.GetHeuristicCost1()
 
     def CreateChildren(self):
         for missingStudent in self.missingList: 
-            children = State_Bus_Distribution(self.parent,missingStudent,self.missingList)
+            children = State_Bus_Distribution(self,missingStudent,self.missingList,self.start, self.goal)
             self.children.append(children)
           
         
@@ -117,12 +130,12 @@ class State_Bus_Distribution(State):
         pathCost = 0
         #conditional cost based on student type
         #previous student into bus
-        if self.path:
+        if self.path:  
             self.value.cost = self.value.GetStudentCost(self.path)    
+            for student in self.path:
+                pathCost += student.cost
         else:
-            raise Exception("Path empty, cannot find previous student")
-        for student in self.path:
-            pathCost += student.cost
+            print ("Path empty, start state takes cost 0 \n")
         return pathCost
 
 class AstarSolver:
@@ -153,7 +166,7 @@ class AstarSolver:
                         break
                     self.priorityQueu.put((self.cost, count, child))
         if not self.path:
-            print ("Goal of " + self.goal + " is not possible")
+            print ("This student combination is not possible")
             return
         return self.path
 
@@ -214,10 +227,10 @@ def ReadInputFile(input):
 
 if __name__ == "__main__":
 
-    students = ReadInputFile(r"C:\Users\eloyfernandez\Documents\Uni\Heuristica\Lab2\Lab2Heuristics\prueba.txt")
+    students = ReadInputFile(r"C:\Users\eloyfernandez\Documents\Uni\Heuristica\Lab2\Lab2Heuristics\prueba2.txt")
 
     start = []
-    goal = students
+    goal = students[:]
 
     solver = AstarSolver(students,start,goal)
     solution = solver.Solve()

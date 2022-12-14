@@ -1,12 +1,13 @@
 from queue import PriorityQueue
 
 class Student():
-    def  __init__(self,id ="-1",trouble = False,reduced = False ,seat = -1,empty = False,cost = 1):
+    def  __init__(self,id ="-1",trouble = False,reduced = False ,seat = -1,empty = False, valid = True,cost = 1):
         self.id = id
         self.trouble = trouble
         self.reduced = reduced
         self.seat = seat
         self.empty = empty
+        self.valid = valid
         self.cost = cost
 
     #get cost of single student
@@ -32,6 +33,7 @@ class Student():
                     return 2
                 else:
                     print("temporal solution for 'no solution' v2")
+                    self.valid = False
                     return 10000000
         elif self.reduced and self.trouble:
             if (not prevStudent.reduced) and (not prevStudent.trouble):
@@ -40,9 +42,11 @@ class Student():
             else:
                 if prevStudent.reduced and prevStudent.trouble:
                     print("temporal solution for 'no solution' v1")
+                    self.valid = False
                     return 10000000
                 elif prevStudent.reduced:
                     print("temporal solution for 'no solution' v2")
+                    self.valid = False
                     return 10000000
                 elif prevStudent.trouble:
                     return self.GetStudentCost(StudentPath[:-2]) + 3
@@ -54,9 +58,11 @@ class Student():
             else:
                 if prevStudent.reduced and prevStudent.trouble:
                     print("temporal solution for 'no solution' v1")
+                    self.valid = False
                     return 10000000
                 elif prevStudent.reduced:
                     print("temporal solution for 'no solution' v2")
+                    self.valid = False
                     return 10000000
                 elif prevStudent.trouble:
                     return 6
@@ -64,79 +70,137 @@ class Student():
                     raise Exception("Previous student not in correct category v2")
         elif self.trouble:
             return self.GetStudentCost(StudentPath[:-2]) + 1
-                    
 
+    def EvaluateTroubleCost(self,StudentPath):
+        studentCost = self.GetStudentCost(StudentPath)
+        for student in StudentPath[:-1]:
+            if student.trouble and (student.seat < self.seat):
+                studentCost *= 2
 
-class State(object):
-    def __init__(self,parent,start, goal,
-                    value = Student()):
+        return studentCost        
+
+# class State(object):
+#     def __init__(self,parent,start, goal,
+#                     value = Student()):
+#         self.children = []
+#         self.parent = parent
+#         self.value = value
+#         self.heuristicCost = 0
+#         self.cost = 0
+#         if parent:
+#             self.path = parent.path[:]
+#             self.path.append(value)
+#             self.start = parent.start
+#             self.goal = parent.goal
+#         else:
+#             self.path = []
+#             self.start = start
+#             self.goal = goal
+
+#     def GetPathCost(self):
+#         pass
+    
+#     def CreateChildren(self):
+#         pass
+
+class State_Bus_Distribution():
+    def __init__(self, parent, value, missingList, start, goal):
+        #super(State_Bus_Distribution,self).__init__(parent, start, goal, value)
+
         self.children = []
         self.parent = parent
         self.value = value
         self.heuristicCost = 0
-        self.cost = 0
-        if parent:
-            self.path = parent.path[:]
-            self.path.append(value)
-            self.start = parent.start
-            self.goal = parent.goal
-        else:
-            self.path = []
-            self.start = start
-            self.goal = goal
+        self.pathCost = 0
+        self.valid = True
 
-    def GetPathCost(self):
-        pass
-    def GetHeuristicCost(self):
-        pass
-    def CreateChildren(self):
-        pass
-
-class State_Bus_Distribution(State):
-    #self.value will represent a student
-    def __init__(self, parent, value, missingList, start, goal):
-        super(State_Bus_Distribution,self).__init__(parent, start, goal, value)
-        self.pathCost = self.GetPathCost()
         copyList = missingList[:]
         if self.value not in copyList:
             self.missingList = copyList
         else:
             copyList.remove(self.value)
             self.missingList = copyList
-        self.heuristicCost = self.GetHeuristicCost1()
 
+        self.heuristicCost = self.GetHeuristicCost1()
+        
+        if parent:
+            self.path = parent.path[:]
+            self.AddStudent()
+            self.start = parent.start
+            self.goal = parent.goal
+        else:
+            self.path = []
+            self.start = start
+            self.goal = goal
+        if self.path:
+            self.pathCost = self.GetPathCost()
+
+         
     def CreateChildren(self):
         for missingStudent in self.missingList: 
             children = State_Bus_Distribution(self,missingStudent,self.missingList,self.start, self.goal)
             self.children.append(children)
-          
-        
+                 
     def GetHeuristicCost1(self):
+        heuristicCost = 0
+        for student in self.missingList:
+            if student.reduced:
+                heuristicCost += 3
+            else:
+                heuristicCost += 1
+                
+        return heuristicCost
+
+    def GetHeuristicCost2(self):
         return len(self.missingList)
 
-    def AddStudent(self, student):
-        if student in self.missingList:
-            if student.reduced and self.path[-1].reduced:
-                print("two reduced not allowed")
-                return 
-            else:
-                self.missingList.remove(student)
-                self.path.append(student)
-                return
-        print("student already in path")
-        return 
+    def AddStudent(self):
+        #Make sure that path is not empty
+        if len(self.path) == 0:
+            self.path.append(self.value)
+            return
+        elif (len(self.missingList)==0) and self.value.reduced:
+            print("Reduced movility last is not allowed")
+            self.valid = False
+        elif self.value.reduced and self.path[-1].reduced:
+            print("two reduced not allowed") 
+            self.valid = False
+
+        self.path.append(self.value)
+        return
+
 
     def GetPathCost(self):
         pathCost = 0
         #conditional cost based on student type
         #previous student into bus
         if self.path:  
-            self.value.cost = self.value.GetStudentCost(self.path)    
+            self.value.cost = self.value.EvaluateTroubleCost(self.path)    
+            if not self.value.valid:
+                self.valid = False
             for student in self.path:
                 pathCost += student.cost
         else:
             print ("Path empty, start state takes cost 0 \n")
+        
+        #pathCost = self.EvaluatePathTrouble()
+
         return pathCost
+
+    # def EvaluatePathTrouble(self):
+    #     troubleIndex = []
+    #     pathCost = 0
+    #     for child in self.path:
+    #         if child.trouble:
+    #             troubleIndex.append(self.path.index(child))
+    #     for index in troubleIndex:
+    #         for student in self.path[:index + 1]:
+    #             pathCost += student.cost
+    #         for student in self.path[index + 1:]:
+    #             if student.seat > self.path[index].seat:
+    #                 pathCost += student.cost * 2
+        
+    #     return pathCost
 
 class AstarSolver:
     def __init__(self,students, start, goal):
@@ -162,17 +226,18 @@ class AstarSolver:
             closestChild.CreateChildren()
             self.visitedQueu.append(closestChild)
             for child in closestChild.children:
-                print ("Checking child: " + str(child.value.id))
-                if child not in self.visitedQueu:
-                    count += 1
-                    self.cost = child.heuristicCost + child.pathCost
-                    print(str(len(child.missingList)) + " Missing list")
-                    print(str(child.heuristicCost) + " Heuristic cost" )
-                    print(str(self.cost) + " child TOTAL COST" )
-                    if not child.heuristicCost:
-                        self.path = child.path
-                        break
-                    self.priorityQueu.put((self.cost, count, child))
+                if child.valid:
+                    print ("Checking child: " + str(child.value.id))
+                    if child not in self.visitedQueu:
+                        count += 1
+                        self.cost = child.heuristicCost + child.pathCost
+                        print(str(len(child.missingList)) + " Missing list")
+                        print(str(child.heuristicCost) + " Heuristic cost" )
+                        print(str(self.cost) + " child TOTAL COST" )
+                        if not child.heuristicCost:
+                            self.path = child.path
+                            break
+                        self.priorityQueu.put((self.cost, count, child))
             print(str(self.priorityQueu.qsize()) + " end")
         if not self.path:
             print ("This student combination is not possible")
@@ -226,7 +291,7 @@ def ReadInputFile(input):
             else:
                 reduced = False
     
-        student = Student(id,trouble,reduced,seat,empty=False)
+        student = Student(id,trouble,reduced,seat,empty=False,valid=True)
         students.append(student)
 
     initQtxt.close()
@@ -236,14 +301,15 @@ def ReadInputFile(input):
 
 if __name__ == "__main__":
 
-    students = ReadInputFile(r"C:\Users\eloyfernandez\Documents\Uni\Heuristica\Lab2\Lab2Heuristics\prueba2.txt")
+    students = ReadInputFile(r"C:\Users\eloyfernandez\Documents\Uni\Heuristica\Lab2\Lab2Heuristics\prueba5.txt")
 
     start = []
     goal = students[:]
 
     solver = AstarSolver(students,start,goal)
     solution = solver.Solve()
-    print ("Total cost of the path is:" + str(solution.cost))
-    print ("\n The ordered list of students is: ")
-    for child in solution.path:
-        print (child.id + "\t")
+    if solution:    
+        print ("\nTotal cost of the path is: " + str(solution.cost))
+        print ("\nThe ordered list of students is: ")
+        for child in solution.path:
+            print ("ID: " + str(child.id) + "\t" + "Student cost: " + str(child.cost) + "\t" + " Student seat: " + str(child.seat))

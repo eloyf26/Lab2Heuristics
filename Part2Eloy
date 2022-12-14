@@ -1,0 +1,227 @@
+from queue import PriorityQueue
+
+class Student():
+    def  __init__(self,id ="-1",trouble = False,reduced = False ,seat = -1,empty = False,cost = 1):
+        self.id = id
+        self.trouble = trouble
+        self.reduced = reduced
+        self.seat = seat
+        self.empty = empty
+        self.cost = cost
+
+    #get cost of single student
+    def GetStudentCost(self,StudentPath):
+        prevStudent = StudentPath[-2]
+        # 4 different cases (there is some redundancy in the if statement)
+        if (not self.reduced) and (not self.trouble):
+            if (not prevStudent.reduced) and (not prevStudent.trouble):
+                return 1
+            else:
+                if prevStudent.reduced and prevStudent.trouble:
+                    return self.GetStudentCost(StudentPath[:-2])
+                elif prevStudent.reduced:
+                    return 0
+                elif prevStudent.trouble:
+                    return 2
+                else:
+                    raise Exception("Previous student not in correct category v1")
+        elif self.reduced and self.trouble:
+            if (not prevStudent.reduced) and (not prevStudent.trouble):
+                #duplicate previous student value + current student
+                return self.GetStudentCost(StudentPath[:-2]) + 3
+            else:
+                if prevStudent.reduced and prevStudent.trouble:
+                    raise Exception("temporal solution for 'no solution' v1")
+                elif prevStudent.reduced:
+                    raise Exception("temporal solution for 'no solution' v2")
+                elif prevStudent.trouble:
+                    return self.GetStudentCost(StudentPath[:-2]) + 3
+                else:
+                    raise Exception("Previous student not in correct category v2")
+        elif self.reduced:
+            if (not prevStudent.reduced) and (not prevStudent.trouble):
+                return 3
+            else:
+                if prevStudent.reduced and prevStudent.trouble:
+                    raise Exception("temporal solution for 'no solution' v1")
+                elif prevStudent.reduced:
+                    raise Exception("temporal solution for 'no solution' v2")
+                elif prevStudent.trouble:
+                    return 6
+                else:
+                    raise Exception("Previous student not in correct category v2")
+        elif self.trouble:
+            return self.GetStudentCost(StudentPath[:-2]) + 1
+                    
+
+
+class State(object):
+    def __init__(self,parent,start, goal,
+                    value = Student()):
+        self.children = []
+        self.parent = parent
+        self.value = value
+        self.heuristicCost = 0
+        self.cost = 0
+        if parent:
+            self.path = parent.path[:]
+            self.path.append(value)
+            self.start = parent.start
+            self.goal = parent.goal
+        else:
+            self.path = [value]
+            self.start = start
+            self.goal = goal
+
+    def GetPathCost(self):
+        pass
+    def GetHeuristicCost(self):
+        pass
+    def CreateChildren(self):
+        pass
+
+class State_Bus_Distribution(State):
+    #self.value will represent a student
+    def __init__(self, parent, value, missingList, start, goal):
+        super(State_Bus_Distribution,self).__init__(parent, start, goal, value)
+        self.pathCost = self.GetPathCost()
+        if self.value not in missingList:
+            self.missingList = missingList
+        else:
+            self.missingList = missingList.remove(self.value)
+        self.heuristicCost = self.GetHeuristicCost()
+        self.children = self.CreateChildren()
+
+    def CreateChildren(self):
+        for missingStudent in self.missingList: 
+            children = State_Bus_Distribution(self.parent,missingStudent,self.missingList)
+            self.children.append(children)
+          
+        
+    def GetHeuristicCost1(self):
+        return len(self.missingList)
+
+    def AddStudent(self, student):
+        if student in self.missingList:
+            if student.reduced and self.path[-1].reduced:
+                print("two reduced not allowed")
+                return 
+            else:
+                self.missingList.remove(student)
+                self.path.append(student)
+                return
+        print("student already in path")
+        return 
+
+    def GetPathCost(self):
+        pathCost = 0
+        #conditional cost based on student type
+        #previous student into bus
+        if self.path:
+            self.value.cost = self.value.GetStudentCost(self.path)    
+        else:
+            raise Exception("Path empty, cannot find previous student")
+        for student in self.path:
+            pathCost += student.cost
+        return pathCost
+
+class AstarSolver:
+    def __init__(self,students, start, goal):
+        self.path = []
+        self.visitedQueu = []
+        self.priorityQueu = PriorityQueue()
+        self.start = start 
+        self.goal = goal
+        self.studentList = students
+        self.cost = 0
+
+    def Solve(self):
+        startState = State_Bus_Distribution(0, self.start, self.studentList, self.start, self.goal)
+        count = 0
+        self.priorityQueu.put((0,count,startState))
+        #While not having path and priorityqueu size not empty
+        while (not self.path and self.priorityQueu.qsize()):
+            closestChild = self.priorityQueu.get()[2]
+            closestChild.CreateChildren()
+            self.visitedQueu.append(closestChild.value)
+            for child in closestChild.children:
+                if child.value not in self.visitedQueu:
+                    count += 1
+                    self.cost = child.heuristicCost + child.pathCost
+                    if not child.heuristicCost:
+                        self.path = child.path
+                        break
+                    self.priorityQueu.put((self.cost, count, child))
+        if not self.path:
+            print ("Goal of " + self.goal + " is not possible")
+            return
+        return self.path
+
+#Functions to read the input file in appropiate format
+def obtainseats(seatsarray):
+    if len(seatsarray) == 3:
+        seat = int(seatsarray[1] + seatsarray[2])
+    elif len(seatsarray) == 2:
+        seat = int(seatsarray[1])
+    else:
+        raise Exception("Not correct seat format")
+
+    return seat
+
+
+def ReadInputFile(input):
+
+    students  = []
+    initQtxt = open(input,'r')
+
+    s = initQtxt.read().split(",")
+    for s in s:
+        s = s.strip('{').strip('}')
+        s2 = s.split(":")
+        s2[0] = s2[0].lstrip()
+        seat = obtainseats(s2[1])
+        #double digit id
+        if len(s2[0]) == 4:
+            id = s2[0][0] + s2[0][1]
+            if s2[0][2] == 'C':
+                trouble = True
+            else:
+                trouble  = False
+            if s2[0][3] == 'R':
+                reduced = True
+            else:
+                reduced = False
+        #single digit id   
+        else:
+            id = s2[0][0]
+            if s2[0][1] == 'C':
+                trouble = True
+            else:
+                trouble  = False
+
+            if s2[0][2] == 'R':
+                reduced = True
+            else:
+                reduced = False
+    
+        student = Student(id,trouble,reduced,seat,empty=False)
+        students.append(student)
+
+    initQtxt.close()
+    #print(students)
+    
+    return students
+
+if __name__ == "__main__":
+
+    students = ReadInputFile(r"C:\Users\eloyfernandez\Documents\Uni\Heuristica\Lab2\Lab2Heuristics\prueba.txt")
+
+    start = []
+    goal = students
+
+    solver = AstarSolver(students,start,goal)
+    solution = solver.Solve()
+    print ("Total cost of the path is:" + str(solution.cost))
+    print ("\n The ordered list of students is: ")
+    for child in solution.path:
+        print (child.id + "\t")

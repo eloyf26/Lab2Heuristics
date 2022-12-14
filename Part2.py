@@ -131,7 +131,7 @@ def neighbours(state,pool,heuristic):
 
 #Heuristic one , where we relax the troublesome constraints
 def Heuristic1(state):
-
+    
     cost = 0   
     reduced = False  
     for student in state:

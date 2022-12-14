@@ -121,7 +121,6 @@ class State_Bus_Distribution():
             copyList.remove(self.value)
             self.missingList = copyList
 
-        self.heuristicCost = self.GetHeuristicCost1()
         
         if parent:
             self.path = parent.path[:]
@@ -132,6 +131,9 @@ class State_Bus_Distribution():
             self.path = []
             self.start = start
             self.goal = goal
+
+        self.heuristicCost = self.GetHeuristicCost1()
+
         if self.path:
             self.pathCost = self.GetPathCost()
 
@@ -141,7 +143,7 @@ class State_Bus_Distribution():
             children = State_Bus_Distribution(self,missingStudent,self.missingList,self.start, self.goal)
             self.children.append(children)
                  
-    def GetHeuristicCost1(self):
+    def GetHeuristicCost2(self):
         heuristicCost = 0
         for student in self.missingList:
             if student.reduced:
@@ -151,9 +153,22 @@ class State_Bus_Distribution():
                 
         return heuristicCost
 
-    def GetHeuristicCost2(self):
-        return len(self.missingList)
+    def GetHeuristicCost1(self):
+        heuristicCost = len(self.missingList)
+        for student in self.path:
+            if student.trouble:
+                heuristicCost *= 2
+                
+        return heuristicCost
 
+    # def CountTroublesWithSmallerSit(self,student1):
+    #     count = 0
+    #     index = self.path.index(student1)
+    #     for student2 in self.path[:index]:
+    #         if student2.trouble and student2.seat < student1.seat:
+    #             count += 1
+    #     return count
+            
     def AddStudent(self):
         #Make sure that path is not empty
         if len(self.path) == 0:

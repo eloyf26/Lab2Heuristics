@@ -15,7 +15,8 @@ def ReadInputFile(path):
     for line in studentsTxt.read().splitlines():
 
         s = line.split(",")
-        students.append(s)
+        if len(s) == 5:
+            students.append(s)
         studentsForOutput[s[0]] = s[0:5]
 
     studentsTxt.close()
@@ -281,6 +282,8 @@ def IsFirstYear(student):
         raise Exception("Year format is not valid")
 
 
-if __name__ == "__main__":
-    path = str(sys.argv[1])
-    main(path)
+# if __name__ == "__main__":
+#     path = str(sys.argv[1])
+#    main(path)
+
+main(r"C:\Users\eloyfernandez\Documents\Uni\Heuristica\Lab2\Lab2Heuristics\InputOutputFiles\students01.txt")

@@ -237,6 +237,8 @@ class AstarSolver:
             closestChild = state_touple[2]
             if count != 0:
                 print ("Expanded student: " + str(closestChild.value.id) + " Expanded STATE: " + str(state_touple[1]))
+                for i in closestChild.path:
+                    print (i.id)
             print(str(self.priorityQueu.qsize()) + " start")
             closestChild.CreateChildren()
             self.visitedQueu.append(closestChild)

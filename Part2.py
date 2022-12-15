@@ -85,14 +85,20 @@ def Astar(initial):
     #came_from = {initial: None}
     #cost_so_far = 0
     current = None
+    iteration = 0
     while not queue.empty():
+
         current = queue.get()
+        #print("Iteration: ",iteration)
+        #checkerrors(current.state)
         if FinalState(current):
             print("Soultion Found")
             break
-
+        #print("Neighbours:")   
         nextinQueue = neighbours(current.state,current.pool,current.heuristic)
         for next in nextinQueue : 
+                #checkerrors(next.state)
+                #print("\n")
                 new_cost = cost_so_far[current] + 1
                 #print(CheckState(next.state))
                 #new_cost = cost_so_far + 1
@@ -101,7 +107,7 @@ def Astar(initial):
                     fn = new_cost + current.heuristic
                     queue.put(next,fn)
                     #came_from[next] = current
-
+        iteration += 1
     return cost_so_far,current.state
 
 #Function to obtain the next possibilities of students on the Queue
@@ -122,16 +128,27 @@ def neighbours(state,pool,heuristic):
                 for x in pool:
                     if x not in state:
                         newpool.append(x)
-
+                #print(count,"-",len(newpool))
+                #(checkerrors(state))
                 node = Node(state,newpool,heuristic)
                 options.append(node)
+                print("Dentro")
+                for o in options:
+                    print(checkerrors(o.state))
 
+            print("Fuera")      
+            for o in options:
+                print(checkerrors(o.state))
+   
     return options
 
+def checkerrors(state):
+    for s in state:
+        print("->",s.id," ",s.reduced) 
 
 #Heuristic one , where we relax the troublesome constraints
 def Heuristic1(state):
-    
+
     cost = 0   
     reduced = False  
     for student in state:
@@ -188,6 +205,8 @@ def Heuristic2(state):
 
     #Troule = x2 behind and ahead
     #Trouble Double time of students behind queue and higher seat number
+
+
 
 
 #Function to obtain the time of a solution
@@ -296,7 +315,7 @@ def main(students,heuristic):
 
     initialnode = Node(initState,students,heuristic)
     cost,finalstate = Astar(initialnode)
-    print(Heuristic1(finalstate))
+    #print(Heuristic1(finalstate))
     solution(students,students,finalstate)
     return
 
